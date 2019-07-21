@@ -1,0 +1,21 @@
+{
+    "name": "pizepei/container",
+    "description": "container",
+    "homepage": "https://org.heil.top/",
+    "keywords": ["container"],
+      "authors": [
+          {
+              "name": "pizepei",
+              "email": "pizepei@pizepei.com"
+          }
+      ],
+      "require": {
+          "php": ">=7.0.0",
+          "psr/container": "~1.0"
+      },
+      "autoload": {
+          "psr-4": {
+              "pizepei\\container\\": "src/"
+          }
+      }
+}
