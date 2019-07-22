@@ -14,7 +14,7 @@ class Container implements ContainerInterface
      * 容器对象实例（当前类）
      * @var Container
      */
-    protected static $instance;
+    protected static $instance =null;
 
     /**
      * 容器中的对象实例
@@ -49,7 +49,7 @@ class Container implements ContainerInterface
      */
     protected function setInstances($name ,$instances)
     {
-        if (isset($$instances[$name])){
+        if (isset($instances[$name])){
             
         }
 
@@ -92,7 +92,7 @@ class Container implements ContainerInterface
     }
 
     /**
-     * 根据容器标识返回容器的服务
+     * 根据容器标识返回容器的服务(不包括框架级别)
      * @param string $id Identifier of the entry to look for.
      * @throws NotFoundExceptionInterface  No entry was found for **this** identifier.
      * @throws ContainerExceptionInterface Error while retrieving the entry.
@@ -100,7 +100,10 @@ class Container implements ContainerInterface
      */
     public function get($id)
     {
-
+        if (isset($this->instances[$id])){
+            return $this->instances[$id];
+        }
+        throw new \Exception('Resources don t exist');
     }
     /**
      * 判断一个标识服务是否在容器中
@@ -113,6 +116,9 @@ class Container implements ContainerInterface
      */
     public function has($id)
     {
-
+        if (isset($this->Instances[$id])){
+            return true;
+        }
+        return false;
     }
 }
