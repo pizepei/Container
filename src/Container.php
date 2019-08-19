@@ -116,7 +116,10 @@ class Container implements ContainerInterface
      */
     public function has($id)
     {
-        if (isset($this->Instances[$id])){
+        if (isset($this->baseInstances[$id])){
+            return true;
+        }
+        if (isset($this->instances[$id])){
             return true;
         }
         return false;
