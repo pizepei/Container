@@ -1,6 +1,15 @@
 <?php
 /**
  * 容器基础接口
+ * 设计思路（主要是考虑项目维护和IDE适配）
+ *      容器分为主容器和子容器 当然他们都继承Container类
+ *      先实例化主容器（APP）然后一次实例化
+ *          Helper助手容器成为APP容器的一个方法
+ *          MyException类成为APP容器的一个方法
+ *          Route类成为APP容器的一个方法
+ *          Authority 容器成为APP容器的一个方法
+ *          Request类成为APP容器的一个方法
+ *          Controller类成为APP容器的一个方法
  */
 namespace pizepei\container;
 
@@ -11,10 +20,14 @@ use Psr\Container\NotFoundExceptionInterface;
 class Container implements ContainerInterface
 {
     /**
-     * 容器对象实例（当前类）
+     * 容器名称
+     */
+    const CONTAINER_NAME = ''; # Container
+    /**
+     * 容器对象实例（当前实例容器）
      * @var Container
      */
-    protected static $instance =null;
+    protected static $containerInstance =null;
 
     /**
      * 容器中的对象实例
@@ -96,22 +109,45 @@ class Container implements ContainerInterface
      */
     public function __call($name, $arguments)
     {
-        # 判断是否在绑定中
-        if (isset($this->baseBind[$name]) || isset($this->bind[$name])){
-            # 判断是否已经注册
-            if (!isset($this->instances[$name])){
-                # 判断是否有参数
-                if (!empty($arguments)){
-                    $this->instances[$name] = new  $this->baseBind[$name](...$arguments);
-                }else{
-                    $this->instances[$name] = new  $this->baseBind[$name]();
-                }
-            }
-            return $this->instances[$name];
-        }
-        return false;
+        return $this->bind($name, $arguments);
     }
 
+    /**
+     * @Author 皮泽培
+     * @Created 2019/8/24 9:35
+     * @param $name  容器名称（实际上是__call和__callStatic的name参数）
+     * @param $arguments 容器实例化的参数（实际上是__call和__callStatic的arguments参数）
+     * @title  通过魔术方法注册或者绑定的容器，并且直接使用（方法不强制更新已经存在的服务对象）
+     * @explain 路由功能说明
+     * @return bool|mixed
+     * @throws \Exception
+     */
+    public function bind($name, $arguments)
+    {
+        # 由于baseBind中的对象先定义bind中的，然后服务对象都保存在instances中，bind方法只做不存在的服务的绑定和服务的返回
+        #   因此不做判断是否是baseBind服务，也不做强制更新服务对象
+
+        # 判断是否已经注册
+        if (isset($this->instances[$name])){
+            return $this->instances[$name];
+        }else{
+            # 获取绑定参数baseBind   bind
+            if (isset($this->baseBind[$name])){
+                $bind = 'baseBind';
+            }else if (isset($this->bind[$name])) {
+                $bind = 'bind';
+            }else{
+                throw new \Exception('bind don t exist');}
+            # 判断是否有参数
+            if (!empty($arguments)){
+                return $this->instances[$name] = new  $this->$bind[$name](...$arguments);
+            }else{
+                return $this->instances[$name] = new  $this->$bind[$name]();
+            }
+
+        }
+        throw new \Exception('bind don t exist');
+    }
     /**
      * 当调用一个不存在的 静态  方法时使用
      * @param $name
@@ -119,11 +155,18 @@ class Container implements ContainerInterface
      */
     public static function __callStatic($name, $arguments)
     {
-        // TODO: Implement __callStatic() method.
+        # 所以继承本类的子容器都会放入static::$containerInstance中
+
+        # 检测主容器是否实例化
+        if (!isset(self::$containerInstance[static::CONTAINER_NAME])){
+            # 实例化主容器并且给 static::$containerInstance
+            self::$containerInstance[static::CONTAINER_NAME] = new static(...$arguments);# static 实例化的是当前子类  self 实例化的是当前基类
+        }
+        return self::$containerInstance[static::CONTAINER_NAME]->bind($name, $arguments);
     }
 
     /**
-     * 根据容器标识返回容器的服务(不包括框架级别)
+     * 根据容器标识返回容器的服务
      * @param string $id Identifier of the entry to look for.
      * @throws NotFoundExceptionInterface  No entry was found for **this** identifier.
      * @throws ContainerExceptionInterface Error while retrieving the entry.
@@ -145,7 +188,7 @@ class Container implements ContainerInterface
      *
      * @return bool
      */
-    public function has(string $id):bool
+    public function has($id)
     {
         if (isset($this->instances[$id])){
             return true;
@@ -153,4 +196,22 @@ class Container implements ContainerInterface
         return false;
     }
 
+    /**
+     * @Author 皮泽培
+     * @Created 2019/7/17 15:07
+     * @param bool $new
+     * @param App $app
+     * @title  静态初始化
+     * @explain 一般情况都是使用app容器的，但是在没有依赖app容器时就可以使用这个方法
+     * @return Helper
+     * @throws \Exception
+     */
+    public static function init(bool $new = false,string $son = ''):self
+    {
+        # 实现本身这个类
+        if (!isset(self::$containerInstance[self::CONTAINER_NAME]) || $new){
+            self::$containerInstance[self::CONTAINER_NAME] = new static($son);
+        }
+        return self::$containerInstance[static::CONTAINER_NAME];
+    }
 }
