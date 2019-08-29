@@ -137,7 +137,7 @@ class Container implements ContainerInterface
             }else if (isset($this->bind[$name])) {
                 $bind = 'bind';
             }else{
-                throw new \Exception('bind don t exist');}
+                throw new \Exception('bind['.$name.'] don t exist');}
             # 判断是否有参数
             if (!empty($arguments)){
                 return $this->instances[$name] = new  $this->$bind[$name](...$arguments);
