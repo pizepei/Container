@@ -209,8 +209,8 @@ class Container implements ContainerInterface
     public static function init(bool $new = false,string $son = ''):self
     {
         # 实现本身这个类
-        if (!isset(self::$containerInstance[self::CONTAINER_NAME]) || $new){
-            self::$containerInstance[self::CONTAINER_NAME] = new static($son);
+        if (!isset(self::$containerInstance[static::CONTAINER_NAME]) || $new){
+            self::$containerInstance[static::CONTAINER_NAME] = new static($son);
         }
         return self::$containerInstance[static::CONTAINER_NAME];
     }
