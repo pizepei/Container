@@ -58,6 +58,26 @@ class Container implements ContainerInterface
     protected $invokeCallback = [];
 
     /**
+     * 容器在初始化时可以设置子容器的bind数据
+     * Container constructor.
+     * @param string $son
+     */
+    public function __construct(string $son = '')
+    {
+        if ($son !==''){
+            # 判断是否存在
+            if($son::bind !== [])
+            {
+                #合并
+                $this->bind = array_merge($son::bind ,$this->bind);
+            }
+        }
+        self::$containerInstance[static::CONTAINER_NAME] = $this;
+    }
+
+
+
+    /**
      * 注册一个普通服务
      */
     protected function setInstances($name ,$instances,bool $new=false)
